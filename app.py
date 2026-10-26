@@ -70,7 +70,7 @@ def chat():
         for intento in range(max_intentos):
             try:
                 response = client.models.generate_content(
-                    model='gemini-2.0-flash',
+                    model='gemini-1.5-pro',
                     contents=prompt_completo,
                     config=types.GenerateContentConfig(
                         system_instruction=SYSTEM_INSTRUCTION,
