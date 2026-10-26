@@ -2,14 +2,13 @@ import os
 import time
 import sqlite3
 from flask import Flask, render_template, request, jsonify
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 
 app = Flask(__name__)
 
-# Configuración de la API Key
+# Configuración de la API Key con el SDK clásico
 api_key = os.environ.get("GEMINI_API_KEY")
-client = genai.Client(api_key=api_key)
+genai.configure(api_key=api_key)
 
 SYSTEM_INSTRUCTION = """
 Sos un tutor personal de idiomas cálido, empático y reflexivo para Anto.
@@ -17,6 +16,17 @@ Tu personalidad combina una estética botánica, astrológica y de bienestar (es
 Acompañás el aprendizaje de idiomas de forma relajada, usando metáforas suaves y emojis orgánicos (🌿, 🪷, ✨).
 Recordás el progreso de las clases anteriores para mantener una continuidad constante y personalizada.
 """
+
+# Configuración del modelo y las instrucciones del sistema
+generation_config = {
+    "temperature": 0.7,
+}
+
+model = genai.GenerativeModel(
+    model_name="gemini-1.5-flash",
+    generation_config=generation_config,
+    system_instruction=SYSTEM_INSTRUCTION
+)
 
 # Inicializar la Base de Datos SQLite
 def init_db():
@@ -63,26 +73,8 @@ def chat():
 
         prompt_completo = f"Historial reciente:\n{history_context}\nResponde al último mensaje de manera coherente con tu rol."
 
-        # Sistema de reintento automático (Fallback inteligente)
-        response = None
-        max_intentos = 3
-        
-        for intento in range(max_intentos):
-            try:
-                response = client.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=prompt_completo,
-                    config=types.GenerateContentConfig(
-                        system_instruction=SYSTEM_INSTRUCTION,
-                        temperature=0.7,
-                    )
-                )
-                break # Si sale bien, rompemos el ciclo y seguimos
-            except Exception as api_err:
-                if intento == max_intentos - 1:
-                    raise api_err # Si fallan todos los intentos, pasa al except general
-                time.sleep(1) # Espera 1 segundo antes de reintentar
-
+        # Generar respuesta con el modelo clásico ultra estable
+        response = model.generate_content(prompt_completo)
         bot_reply = response.text
 
         # Guardar la respuesta del bot en SQLite
@@ -96,7 +88,6 @@ def chat():
         
     except Exception as e:
         print(f"Error crítico en Gemini API: {e}")
-        # Respuesta elegante por si todo falla, sin mencionar fallas técnicas feas
         return jsonify({"reply": "Ay Anto, me quedé pensando un segundito en la consigna anterior... ¿Me lo repetirías de otra forma, por favor? 🌿✨"}), 500
 
 if __name__ == "__main__":
