@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Wellness &bull; Anto 🌿✨</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --rose-botanical: #D49EA6;
+            --mauve-deep: #7D5A62;
+            --matcha-sage: #8A9A72;
+            --text-dark: #3A3234;
+            --bubble-user: #EADCD6;
+            --bubble-bot: #E9EEDE;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            /* Fondo con imagen de moodboard y una capa semitransparente por encima para que no moleste a la vista */
+            background: linear-gradient(rgba(245, 239, 235, 0.82), rgba(245, 239, 235, 0.82)), 
+                        url("{{ url_for('static', filename='bg-moodboard.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 680px;
+            height: 92vh;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-radius: 24px;
+            box-shadow: 0 20px 45px rgba(125, 90, 98, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.9) inset;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, rgba(212, 158, 166, 0.9), rgba(138, 154, 114, 0.9));
+            color: #FAF6F3;
+            padding: 24px;
+            text-align: center;
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 600;
+            font-size: 1.5rem;
+            letter-spacing: 1.2px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+
+        .chat-header span {
+            display: block;
+            font-size: 0.85rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-top: 4px;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 25px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            max-width: 78%;
+            padding: 16px 20px;
+            border-radius: 18px;
+            font-size: 0.97rem;
+            line-height: 1.6;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            position: relative;
+        }
+
+        .message.user {
+            background-color: var(--bubble-user);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            border: 1px solid rgba(212, 158, 166, 0.3);
+        }
+
+        .message.bot {
+            background-color: var(--bubble-bot);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            border-left: 4px solid var(--matcha-sage);
+            border-top: 1px solid rgba(138, 154, 114, 0.2);
+            border-right: 1px solid rgba(138, 154, 114, 0.2);
+            border-bottom: 1px solid rgba(138, 154, 114, 0.2);
+        }
+
+        .chat-input-area {
+            padding: 20px 25px;
+            background: rgba(255, 255, 255, 0.9);
+            border-top: 1px solid rgba(212, 158, 166, 0.15);
+            display: flex;
+            gap: 12px;
+        }
+
+        input {
+            flex: 1;
+            padding: 14px 22px;
+            border: 1px solid #D8C8C2;
+            border-radius: 50px;
+            outline: none;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.95rem;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: var(--matcha-sage);
+            background-color: #FFF;
+            box-shadow: 0 0 0 4px rgba(138, 154, 114, 0.15);
+        }
+
+        button {
+            background: var(--matcha-sage);
+            color: white;
+            border: none;
+            padding: 0 28px;
+            border-radius: 50px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 500;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(138, 154, 114, 0.25);
+        }
+
+        button:hover {
+            background-color: #72815B;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            Lotus & Starlight Sanctuary
+            <span>Language Wellness &bull; Anto 🌿🌸</span>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">¡Hola Anto! 🪷✨ Qué alegría encontrarte en este espacio. Prepará tu infusión natural, respirá profundo y contame cómo arrancó tu día para empezar a charlar un ratito. 🌿</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="userInput" placeholder="Escribí tu mensaje con calma..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const messagesContainer = document.getElementById('chatMessages');
+            const text = input.value.trim();
+            
+            if (!text) return;
+
+            messagesContainer.innerHTML += `<div class="message user">${text}</div>`;
+            input.value = '';
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+                const data = await response.json();
+                
+                messagesContainer.innerHTML += `<div class="message bot">${data.reply}</div>`;
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            } catch (error) {
+                messagesContainer.innerHTML += `<div class="message bot">Ay Anto, mercurio retrógrado nos dio una pequeña pausa en la energía. Probá de nuevo en un segundito. 🪐💫</div>`;
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>
