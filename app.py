@@ -1,4 +1,5 @@
 import os
+import time
 import sqlite3
 from flask import Flask, render_template, request, jsonify
 from google import genai
@@ -31,12 +32,10 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Ejecutamos la creación de la tabla al arrancar
 init_db()
 
 @app.route("/")
 def index():
-    # Opcional: podrías cargar los mensajes anteriores de la BD si querés mostrarlos en pantalla
     return render_template("index.html")
 
 @app.route("/chat", methods=["POST"])
@@ -52,29 +51,38 @@ def chat():
         cursor.execute("INSERT INTO historial (sender, message) VALUES (?, ?)", ("user", user_message))
         conn.commit()
 
-        # Recuperar un poco de historial reciente de la base de datos para darle contexto al modelo
+        # Recuperar historial reciente de la base de datos
         cursor.execute("SELECT sender, message FROM historial ORDER BY id DESC LIMIT 6")
         rows = cursor.fetchall()
         
-        # Armamos el historial conversacional para pasárselo a Gemini
         history_context = ""
         for sender, msg in reversed(rows):
             history_context += f"{sender}: {msg}\n"
 
         conn.close()
 
-        # Generar respuesta con Gemini usando el contexto acumulado
         prompt_completo = f"Historial reciente:\n{history_context}\nResponde al último mensaje de manera coherente con tu rol."
 
-        response = client.models.generate_content(
-            model='gemini-3.8-flash',
-            contents=prompt_completo,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_INSTRUCTION,
-                temperature=0.7,
-            )
-        )
+        # Sistema de reintento automático (Fallback inteligente)
+        response = None
+        max_intentos = 3
         
+        for intento in range(max_intentos):
+            try:
+                response = client.models.generate_content(
+                    model='gemini-2.0-flash',
+                    contents=prompt_completo,
+                    config=types.GenerateContentConfig(
+                        system_instruction=SYSTEM_INSTRUCTION,
+                        temperature=0.7,
+                    )
+                )
+                break # Si sale bien, rompemos el ciclo y seguimos
+            except Exception as api_err:
+                if intento == max_intentos - 1:
+                    raise api_err # Si fallan todos los intentos, pasa al except general
+                time.sleep(1) # Espera 1 segundo antes de reintentar
+
         bot_reply = response.text
 
         # Guardar la respuesta del bot en SQLite
@@ -87,8 +95,9 @@ def chat():
         return jsonify({"reply": bot_reply})
         
     except Exception as e:
-        print(f"Error en Gemini API: {e}")
-        return jsonify({"reply": "Ay Anto, mercurio retrógrado nos dio una pequeña pausa en la energía. Probá de nuevo en un segundito. 🪐💫"}), 500
+        print(f"Error crítico en Gemini API: {e}")
+        # Respuesta elegante por si todo falla, sin mencionar fallas técnicas feas
+        return jsonify({"reply": "Ay Anto, me quedé pensando un segundito en la consigna anterior... ¿Me lo repetirías de otra forma, por favor? 🌿✨"}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
